@@ -74,7 +74,7 @@ ul.contains-task-list .task-list-item-checkbox {
     -webkit-touch-callout: none;
 }
 
-a.tasks-edit, a.tasks-postpone {
+a.tasks-edit, a.tasks-postpone, a.tasks-move {
     text-decoration: none;
 }
 
@@ -84,6 +84,10 @@ a.tasks-edit, a.tasks-postpone {
 
 .tasks-postpone::after {
     content: '⏩';
+}
+
+a.tasks-move::after {
+    content: '📥'
 }
 
 /* Urgency score */

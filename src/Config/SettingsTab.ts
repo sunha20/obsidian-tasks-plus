@@ -379,6 +379,64 @@ export class SettingsTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 });
             });
+
+        // ---------------------------------------------------------------------------
+        new Setting(containerEl).setName('Task Mover').setHeading();
+        // ---------------------------------------------------------------------------
+        let dailyNoteFormat: Setting | null = null;
+        let dailyNoteFolder: Setting | null = null;
+        let basicNotePath: Setting | null = null;
+
+        new Setting(containerEl)
+            .setName('Use daily note')
+            .setDesc('test')
+            .addToggle((toggle) => {
+                const settings = getSettings();
+                toggle.setValue(settings.useDailyNote).onChange(async (value) => {
+                    updateSettings({ useDailyNote: value });
+                    await this.plugin.saveSettings();
+                    setSettingVisibility(dailyNoteFormat, value);
+                    setSettingVisibility(dailyNoteFolder, value);
+                    setSettingVisibility(basicNotePath, !value);
+                });
+            });
+
+        dailyNoteFormat = new Setting(containerEl)
+            .setName('Format of daily note title')
+            .setDesc('test')
+            .addText((text) => {
+                const settings = getSettings();
+                text.setValue(settings.dailyNoteFormat).onChange(async (text) => {
+                    updateSettings({ dailyNoteFormat: text });
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        dailyNoteFolder = new Setting(containerEl)
+            .setName('Folder of daily note title')
+            .setDesc('test')
+            .addText((text) => {
+                const settings = getSettings();
+                text.setValue(settings.dailyNoteFolder).onChange(async (text) => {
+                    updateSettings({ dailyNoteFolder: text });
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        basicNotePath = new Setting(containerEl)
+            .setName('Move task to that note')
+            .setDesc('.')
+            .addText((text) => {
+                const settings = getSettings();
+                text.setValue(settings.basicNotePath).onChange(async (text) => {
+                    updateSettings({ basicNotePath: text });
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        setSettingVisibility(dailyNoteFormat, getSettings().useDailyNote);
+        setSettingVisibility(dailyNoteFolder, getSettings().useDailyNote);
+        setSettingVisibility(basicNotePath, !getSettings().useDailyNote);
     }
 
     private addOneSettingsBlock(

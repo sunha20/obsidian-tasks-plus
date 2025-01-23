@@ -91,9 +91,17 @@ export interface Settings {
     debugSettings: DebugSettings;
 
     loggingOptions: LogOptions;
+
+    // For task mover
+    useDailyNote: boolean;
+    dailyNoteFormat: string;
+    dailyNoteFolder: string;
+    basicNotePath: string;
 }
 
-const defaultSettings: Settings = {
+let defaultSettings: Settings;
+// eslint-disable-next-line prefer-const
+defaultSettings = {
     globalQuery: '',
     globalFilter: '',
     removeGlobalFilter: false,
@@ -142,6 +150,12 @@ const defaultSettings: Settings = {
             'tasks.Task': 'info', // Task.ts
         },
     },
+
+    // For task mover
+    useDailyNote: true,
+    dailyNoteFormat: 'YYYY-MM-DD',
+    dailyNoteFolder: '',
+    basicNotePath: '',
 };
 
 let settings: Settings = { ...defaultSettings };

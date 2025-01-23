@@ -1,9 +1,11 @@
 import { type ListItemCache, MetadataCache, Notice, TFile, Vault, Workspace } from 'obsidian';
+import moment from 'moment/moment';
 import { GlobalFilter } from '../Config/GlobalFilter';
 import { type MockListItemCache, type MockTask, saveMockDataForTesting } from '../lib/MockDataCreator';
 import type { Task } from '../Task/Task';
 import { logging } from '../lib/logging';
 import { logEndOfTaskEdit, logStartOfTaskEdit } from '../lib/LogTasksHelper';
+import { getSettings } from '../Config/Settings';
 
 let metadataCache: MetadataCache | undefined;
 let vault: Vault | undefined;
@@ -19,18 +21,10 @@ function getFileLogger() {
 
 export type ErrorLoggingFunction = (message: string) => void;
 
-export const initializeFile = ({
-    metadataCache: newMetadataCache,
-    vault: newVault,
-    workspace: newWorkspace,
-}: {
-    metadataCache: MetadataCache;
-    vault: Vault;
-    workspace: Workspace;
-}) => {
-    metadataCache = newMetadataCache;
-    vault = newVault;
-    workspace = newWorkspace;
+export const initializeFile = (x: { metadataCache: MetadataCache; vault: Vault; workspace: Workspace }) => {
+    metadataCache = x.metadataCache;
+    vault = x.vault;
+    workspace = x.workspace;
 };
 
 /**
@@ -75,6 +69,32 @@ export const replaceTaskWithTasks = async ({
     });
 };
 
+export async function moveTask(task: Task) {
+    // add
+    let targetPath: string;
+    if (getSettings().useDailyNote)
+        targetPath = getSettings().dailyNoteFolder + '/' + moment().format(getSettings().dailyNoteFormat) + '.md';
+    else targetPath = getSettings().basicNotePath;
+
+    const targetFile = vault?.getAbstractFileByPath(targetPath);
+    if (!(targetFile instanceof TFile)) {
+        throw new Notice(`Tasks: No file found for ${targetPath}. Retrying ...`);
+    }
+    await vault?.append(targetFile, `\n${task.toFileLineString()}`);
+
+    // remove
+    const originalPath = task.taskLocation.tasksFile.path;
+    const originalLine = task.taskLocation.lineNumber;
+    const originalFile = vault?.getAbstractFileByPath(originalPath);
+    if (!(originalFile instanceof TFile)) {
+        throw new Notice(`Tasks: No file found for ${originalPath}. Retrying ...`);
+    }
+    // @ts-ignore
+    const originalContents = (await vault.read(originalFile)).split('\n');
+    originalContents.splice(originalLine, 1);
+    await vault?.modify(originalFile, originalContents.join('\n'));
+}
+
 /**
  * @todo Unify this with {@link showError} in EditorSuggestorPopup.ts
  * @param message
@@ -97,6 +117,7 @@ function debugLog(message: string) {
 // When this exception is thrown, it is meant to indicate that the caller should consider to try the operation
 // again soon
 class WarningWorthRetrying extends Error {}
+
 // Same as above, but be silent about it
 class RetryWithoutWarning extends Error {}
 
@@ -203,7 +224,7 @@ async function getTaskAndFileLines(task: Task, vault: Vault): Promise<[number, T
     }
 
     const fileCache = metadataCache.getFileCache(file);
-    if (fileCache == undefined || fileCache === null) {
+    if (fileCache === undefined || fileCache === null) {
         throw new WarningWorthRetrying(`Tasks: No file cache found for file ${file.path}. Retrying ...`);
     }
 

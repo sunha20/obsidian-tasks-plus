@@ -15,6 +15,7 @@ import type { TasksFile } from '../Scripting/TasksFile';
 import type { ListItem } from '../Task/ListItem';
 import { Task } from '../Task/Task';
 import { PostponeMenu } from '../ui/Menus/PostponeMenu';
+import { moveTask } from '../Obsidian/File';
 import { TaskLineRenderer, type TextRenderer, createAndAppendElement } from './TaskLineRenderer';
 
 export type BacklinksEventHandler = (ev: MouseEvent, task: Task) => Promise<void>;
@@ -391,6 +392,10 @@ export class QueryResultsRenderer {
             this.addPostponeButton(extrasSpan, task, shortMode);
         }
 
+        if (!this.query.queryLayoutOptions.hideMoveButton) {
+            this.addMoveButton(extrasSpan, task);
+        }
+
         taskList.appendChild(listItem);
 
         return listItem;
@@ -516,6 +521,16 @@ export class QueryResultsRenderer {
             ev.stopPropagation(); // suppress further event propagation
             const menu = new PostponeMenu(button, task);
             menu.showAtPosition({ x: ev.clientX, y: ev.clientY });
+        });
+    }
+
+    private addMoveButton(listItem: HTMLElement, task: Task) {
+        const button = createAndAppendElement('a', listItem);
+        button.classList.add('tasks-move');
+        button.title = "Move task to today's daily note";
+
+        button.addEventListener('click', async () => {
+            await moveTask(task);
         });
     }
 
