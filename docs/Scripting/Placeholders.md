@@ -64,6 +64,13 @@ Explanation of this Tasks code block query:
 ```
 <!-- endSnippet -->
 
+## Using Query Properties in Placeholders
+
+> [!released]
+> Use of Obsidian properties in placeholders was introduced in Tasks X.Y.Z.
+
+It is now possible to use properties in the query file. See [[Obsidian Properties#Using Query Properties in Placeholders]]
+
 ## Error checking: invalid variables
 
 If there are any unknown properties in the placeholders, a clear message is written.
@@ -119,13 +126,8 @@ The problem is in:
 ## Known Limitations
 
 - It complains about any unrecognised placeholders in comments, even though comments are then ignored.
-- Explanations:
-  - `explain` instructions only show the expanded text.
-  - It would be nice to also show the original variable name, and then the expanded text.
 - Use in regular expressions is allowed
   - but due to [[Regular Expressions#Special characters|characters with special meanings]] in regular expressions, it is not recommended to use them.
-- When you rename a file containing a tasks query block with variable names in, the query block is not automatically updated:
-  - the workaround is to close and re-open the file containing the query.
 
 ## Missing Features
 
