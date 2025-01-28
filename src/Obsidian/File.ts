@@ -2,10 +2,12 @@ import { type ListItemCache, MetadataCache, Notice, TFile, Vault, Workspace } fr
 import moment from 'moment/moment';
 import { GlobalFilter } from '../Config/GlobalFilter';
 import { type MockListItemCache, type MockTask, saveMockDataForTesting } from '../lib/MockDataCreator';
-import type { Task } from '../Task/Task';
+import { Status } from '../Statuses/Status';
+import { Task } from '../Task/Task';
 import { logging } from '../lib/logging';
 import { logEndOfTaskEdit, logStartOfTaskEdit } from '../lib/LogTasksHelper';
 import { getSettings } from '../Config/Settings';
+import type { TaskLocation } from '../Task/TaskLocation';
 
 let metadataCache: MetadataCache | undefined;
 let vault: Vault | undefined;
@@ -70,7 +72,7 @@ export const replaceTaskWithTasks = async ({
 };
 
 export async function moveTask(task: Task) {
-    // add
+    /* target */
     let targetPath: string;
     if (getSettings().useDailyNote)
         targetPath = getSettings().dailyNoteFolder + '/' + moment().format(getSettings().dailyNoteFormat) + '.md';
@@ -80,9 +82,8 @@ export async function moveTask(task: Task) {
     if (!(targetFile instanceof TFile)) {
         throw new Notice(`Tasks: No file found for ${targetPath}. Retrying ...`);
     }
-    await vault?.append(targetFile, `\n${task.toFileLineString()}`);
 
-    // remove
+    /* original */
     const originalPath = task.taskLocation.tasksFile.path;
     const originalLine = task.taskLocation.lineNumber;
     const originalFile = vault?.getAbstractFileByPath(originalPath);
@@ -92,7 +93,52 @@ export async function moveTask(task: Task) {
     // @ts-ignore
     const originalContents = (await vault.read(originalFile)).split('\n');
     originalContents.splice(originalLine, 1);
-    await vault?.modify(originalFile, originalContents.join('\n'));
+
+    /* recurring task */
+    if (task.isRecurring) {
+        /* add */
+        const noRecurringTask = new Task({
+            // NEW_TASK_FIELD_EDIT_REQUIRED
+            status: task.status,
+            description: task.description,
+            // We don't need the location fields except file to edit here in the editor.
+            taskLocation: task.taskLocation,
+            indentation: task.indentation,
+            listMarker: task.listMarker,
+            priority: task.priority,
+            createdDate: task.createdDate,
+            startDate: task.startDate,
+            scheduledDate: task.scheduledDate,
+            dueDate: task.dueDate,
+            doneDate: task.doneDate,
+            cancelledDate: task.cancelledDate,
+            recurrence: null,
+            onCompletion: task.onCompletion,
+            dependsOn: task.dependsOn,
+            id: task.id,
+            blockLink: task.blockLink,
+            tags: task.tags,
+            originalMarkdown: task.originalMarkdown,
+            scheduledDateIsInferred: task.scheduledDateIsInferred,
+        });
+        await vault?.append(targetFile, `\n${noRecurringTask.toFileLineString()}`);
+
+        /* replace */
+        const newTask = task.handleNewStatus(Status.DONE)[0];
+        // @ts-ignore
+        const originalContents = (await vault.read(originalFile)).split('\n');
+        originalContents[originalLine] = newTask.toFileLineString();
+        await vault?.modify(originalFile, originalContents.join('\n'));
+    } else {
+        /* add */
+        await vault?.append(targetFile, `\n${task.toFileLineString()}`);
+
+        /* remove */
+        // @ts-ignore
+        const originalContents = (await vault.read(originalFile)).split('\n');
+        originalContents.splice(originalLine, 1);
+        await vault?.modify(originalFile, originalContents.join('\n'));
+    }
 }
 
 /**
