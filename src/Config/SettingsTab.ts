@@ -465,7 +465,7 @@ export class SettingsTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Use daily note')
-            .setDesc('test')
+            .setDesc('Do you want to move the task to the daily note?')
             .addToggle((toggle) => {
                 const settings = getSettings();
                 toggle.setValue(settings.useDailyNote).onChange(async (value) => {
@@ -479,35 +479,41 @@ export class SettingsTab extends PluginSettingTab {
 
         dailyNoteFormat = new Setting(containerEl)
             .setName('Format of daily note title')
-            .setDesc('test')
+            .setDesc('Enter the format for the daily note title.')
             .addText((text) => {
                 const settings = getSettings();
-                text.setValue(settings.dailyNoteFormat).onChange(async (text) => {
-                    updateSettings({ dailyNoteFormat: text });
-                    await this.plugin.saveSettings();
-                });
+                text.setPlaceholder('YYYY-MM-DD')
+                    .setValue(settings.dailyNoteFormat)
+                    .onChange(async (text) => {
+                        updateSettings({ dailyNoteFormat: text });
+                        await this.plugin.saveSettings();
+                    });
             });
 
         dailyNoteFolder = new Setting(containerEl)
             .setName('Folder of daily note title')
-            .setDesc('test')
+            .setDesc('Enter the path where the daily note is stored.')
             .addText((text) => {
                 const settings = getSettings();
-                text.setValue(settings.dailyNoteFolder).onChange(async (text) => {
-                    updateSettings({ dailyNoteFolder: text });
-                    await this.plugin.saveSettings();
-                });
+                text.setPlaceholder('/')
+                    .setValue(settings.dailyNoteFolder)
+                    .onChange(async (text) => {
+                        updateSettings({ dailyNoteFolder: text });
+                        await this.plugin.saveSettings();
+                    });
             });
 
         basicNotePath = new Setting(containerEl)
             .setName('Move task to that note')
-            .setDesc('.')
+            .setDesc('Enter the path of the note where the task will be moved.')
             .addText((text) => {
                 const settings = getSettings();
-                text.setValue(settings.basicNotePath).onChange(async (text) => {
-                    updateSettings({ basicNotePath: text });
-                    await this.plugin.saveSettings();
-                });
+                text.setPlaceholder('/')
+                    .setValue(settings.basicNotePath)
+                    .onChange(async (text) => {
+                        updateSettings({ basicNotePath: text });
+                        await this.plugin.saveSettings();
+                    });
             });
 
         setSettingVisibility(dailyNoteFormat, getSettings().useDailyNote);
