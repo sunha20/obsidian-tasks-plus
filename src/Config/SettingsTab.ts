@@ -459,11 +459,26 @@ export class SettingsTab extends PluginSettingTab {
         // ---------------------------------------------------------------------------
         new Setting(containerEl).setName('Task Mover').setHeading();
         // ---------------------------------------------------------------------------
+        let useDailyNote: Setting | null = null;
         let dailyNoteFormat: Setting | null = null;
         let dailyNoteFolder: Setting | null = null;
         let basicNotePath: Setting | null = null;
 
         new Setting(containerEl)
+            .setName('Just insert scheduled date')
+            .setDesc("Insert today's date as scheduled date")
+            .addToggle((toggle) => {
+                const settings = getSettings();
+                toggle.setValue(settings.addScheduled).onChange(async (value) => {
+                    updateSettings({ addScheduled: value });
+                    setSettingVisibility(useDailyNote, !value);
+                    setSettingVisibility(dailyNoteFormat, !value);
+                    setSettingVisibility(dailyNoteFolder, !value);
+                    setSettingVisibility(basicNotePath, !value);
+                });
+            });
+
+        useDailyNote = new Setting(containerEl)
             .setName('Use daily note')
             .setDesc('Do you want to move the task to the daily note?')
             .addToggle((toggle) => {

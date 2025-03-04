@@ -1,6 +1,7 @@
 import type { Component, TFile } from 'obsidian';
 import { GlobalFilter } from '../Config/GlobalFilter';
 import { GlobalQuery } from '../Config/GlobalQuery';
+import { getSettings } from '../Config/Settings';
 import { postponeButtonTitle, shouldShowPostponeButton } from '../DateTime/Postponer';
 import type { IQuery } from '../IQuery';
 import { QueryLayout } from '../Layout/QueryLayout';
@@ -15,7 +16,7 @@ import type { TasksFile } from '../Scripting/TasksFile';
 import type { ListItem } from '../Task/ListItem';
 import { Task } from '../Task/Task';
 import { PostponeMenu } from '../ui/Menus/PostponeMenu';
-import { moveTask } from '../Obsidian/File';
+import { addSchduled, moveTask } from '../Obsidian/File';
 import { TaskLineRenderer, type TextRenderer, createAndAppendElement } from './TaskLineRenderer';
 
 export type BacklinksEventHandler = (ev: MouseEvent, task: Task) => Promise<void>;
@@ -530,7 +531,9 @@ export class QueryResultsRenderer {
         button.title = "Move task to today's daily note";
 
         button.addEventListener('click', async () => {
-            await moveTask(task);
+            const settings = getSettings();
+            if (settings.addScheduled) await addSchduled(task);
+            else await moveTask(task);
         });
     }
 

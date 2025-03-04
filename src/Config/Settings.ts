@@ -94,6 +94,7 @@ export interface Settings {
     loggingOptions: LogOptions;
 
     // For task mover
+    addScheduled: boolean;
     useDailyNote: boolean;
     dailyNoteFormat: string;
     dailyNoteFolder: string;
@@ -153,6 +154,7 @@ defaultSettings = {
     },
 
     // For task mover
+    addScheduled: true, // true -> No file-to-file movement. just add scheduledDate today; false -> below settings are used
     useDailyNote: true,
     dailyNoteFormat: 'YYYY-MM-DD',
     dailyNoteFolder: '',

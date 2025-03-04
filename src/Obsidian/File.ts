@@ -141,6 +141,43 @@ export async function moveTask(task: Task) {
     }
 }
 
+export async function addSchduled(task: Task) {
+    const newTask = new Task({
+        // NEW_TASK_FIELD_EDIT_REQUIRED
+        status: task.status,
+        description: task.description,
+        // We don't need the location fields except file to edit here in the editor.
+        taskLocation: task.taskLocation,
+        indentation: task.indentation,
+        listMarker: task.listMarker,
+        priority: task.priority,
+        createdDate: task.createdDate,
+        startDate: task.startDate,
+        scheduledDate: moment(),
+        dueDate: task.dueDate,
+        doneDate: task.doneDate,
+        cancelledDate: task.cancelledDate,
+        recurrence: null,
+        onCompletion: task.onCompletion,
+        dependsOn: task.dependsOn,
+        id: task.id,
+        blockLink: task.blockLink,
+        tags: task.tags,
+        originalMarkdown: task.originalMarkdown,
+        scheduledDateIsInferred: task.scheduledDateIsInferred,
+    });
+
+    const originalFile = vault?.getAbstractFileByPath(task.taskLocation.tasksFile.path);
+    const originalLine = task.taskLocation.lineNumber;
+    if (!(originalFile instanceof TFile)) {
+        throw new Notice(`Tasks: No file found for ${task.taskLocation.tasksFile.path}. Retrying ...`);
+    }
+    // @ts-ignore
+    const originalContents = (await vault.read(originalFile)).split('\n');
+    originalContents[originalLine] = newTask.toFileLineString();
+    await vault?.modify(originalFile, originalContents.join('\n'));
+}
+
 /**
  * @todo Unify this with {@link showError} in EditorSuggestorPopup.ts
  * @param message
