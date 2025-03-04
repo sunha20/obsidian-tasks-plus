@@ -51,14 +51,12 @@
         },
         "tag": "#task"
       }
-    ],
-    "v": 1
+    ]
   },
   "fileContents": "- [ ] #task Task in 'no_heading'\n",
   "filePath": "Test Data/no_heading.md",
   "getAllTags": [
     "#task"
   ],
-  "obsidianApiVersion": "1.8.0",
   "parseFrontMatterTags": null
 }

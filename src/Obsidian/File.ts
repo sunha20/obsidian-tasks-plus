@@ -2,6 +2,7 @@ import { type ListItemCache, MetadataCache, Notice, TFile, Vault, Workspace } fr
 import moment from 'moment/moment';
 import { GlobalFilter } from '../Config/GlobalFilter';
 import { type MockListItemCache, type MockTask, saveMockDataForTesting } from '../lib/MockDataCreator';
+import type { ListItem } from '../Task/ListItem';
 import { Status } from '../Statuses/Status';
 import { Task } from '../Task/Task';
 import { logging } from '../lib/logging';
@@ -23,10 +24,18 @@ function getFileLogger() {
 
 export type ErrorLoggingFunction = (message: string) => void;
 
-export const initializeFile = (x: { metadataCache: MetadataCache; vault: Vault; workspace: Workspace }) => {
-    metadataCache = x.metadataCache;
-    vault = x.vault;
-    workspace = x.workspace;
+export const initializeFile = ({
+    metadataCache: newMetadataCache,
+    vault: newVault,
+    workspace: newWorkspace,
+}: {
+    metadataCache: MetadataCache;
+    vault: Vault;
+    workspace: Workspace;
+}) => {
+    metadataCache = newMetadataCache;
+    vault = newVault;
+    workspace = newWorkspace;
 };
 
 /**
@@ -44,8 +53,8 @@ export const replaceTaskWithTasks = async ({
     originalTask,
     newTasks,
 }: {
-    originalTask: Task;
-    newTasks: Task | Task[];
+    originalTask: ListItem;
+    newTasks: ListItem | ListItem[];
 }): Promise<void> => {
     if (vault === undefined || metadataCache === undefined || workspace === undefined) {
         errorAndNotice('Tasks: cannot use File before initializing it.');
@@ -200,7 +209,6 @@ function debugLog(message: string) {
 // When this exception is thrown, it is meant to indicate that the caller should consider to try the operation
 // again soon
 class WarningWorthRetrying extends Error {}
-
 // Same as above, but be silent about it
 class RetryWithoutWarning extends Error {}
 
@@ -217,8 +225,8 @@ const tryRepetitive = async ({
     workspace,
     previousTries,
 }: {
-    originalTask: Task;
-    newTasks: Task[];
+    originalTask: ListItem;
+    newTasks: ListItem[];
     vault: Vault;
     metadataCache: MetadataCache;
     workspace: Workspace;
@@ -267,7 +275,7 @@ Recommendations:
         // Finally, we can insert 1 or more lines over the original task line:
         const updatedFileLines = [
             ...fileLines.slice(0, taskLineNumber),
-            ...newTasks.map((task: Task) => task.toFileLineString()),
+            ...newTasks.map((task: ListItem) => task.toFileLineString()),
             ...fileLines.slice(taskLineNumber + 1), // Only supports single-line tasks.
         ];
 
@@ -292,7 +300,7 @@ Recommendations:
  * It may throw a WarningWorthRetrying exception in several cases that justify a retry (should be handled by the caller)
  * or an Error exception in case of an unrecoverable error.
  */
-async function getTaskAndFileLines(task: Task, vault: Vault): Promise<[number, TFile, string[]]> {
+async function getTaskAndFileLines(task: ListItem, vault: Vault): Promise<[number, TFile, string[]]> {
     if (metadataCache === undefined) throw new WarningWorthRetrying();
     // Validate our inputs.
     // For permanent failures, return nothing.

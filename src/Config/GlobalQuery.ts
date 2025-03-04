@@ -16,7 +16,7 @@ import type { OptionalTasksFile } from '../Scripting/TasksFile';
 export class GlobalQuery {
     private static instance: GlobalQuery;
 
-    static empty = '';
+    static readonly empty = '';
     private _source;
 
     /**
@@ -49,7 +49,9 @@ export class GlobalQuery {
      * @param tasksFile
      */
     public query(tasksFile: OptionalTasksFile = undefined): Query {
-        return new Query(this._source, tasksFile);
+        const query = new Query(this._source, tasksFile);
+        query.removeIllegalGlobalQueryInstructions();
+        return query;
     }
 
     /**

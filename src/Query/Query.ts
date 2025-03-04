@@ -25,12 +25,20 @@ let queryInstanceCounter = 0;
 export class Query implements IQuery {
     /** Note: source is the raw source, before expanding any placeholders */
     public readonly source: string;
+
+    /** statements contain each source line after processing continuations and placeholders.
+     * There may be more statements than lines in the source, if any multi-line query file property values were used. */
+    public readonly statements: Statement[] = [];
+
     public readonly tasksFile: OptionalTasksFile;
 
     private _limit: number | undefined = undefined;
     private _taskGroupLimit: number | undefined = undefined;
+
     private readonly _taskLayoutOptions: TaskLayoutOptions = new TaskLayoutOptions();
     private readonly _queryLayoutOptions: QueryLayoutOptions = new QueryLayoutOptions();
+    public readonly layoutStatements: Statement[] = [];
+
     private readonly _filters: Filter[] = [];
     private _error: string | undefined = undefined;
     private readonly _sorting: Sorter[] = [];
@@ -59,17 +67,16 @@ export class Query implements IQuery {
 
         const anyContinuationLinesRemoved = continueLines(source);
 
-        const anyPlaceholdersExpanded: Statement[] = [];
         for (const statement of anyContinuationLinesRemoved) {
             const expandedStatements = this.expandPlaceholders(statement, tasksFile);
             if (this.error !== undefined) {
                 // There was an error expanding placeholders.
                 return;
             }
-            anyPlaceholdersExpanded.push(...expandedStatements);
+            this.statements.push(...expandedStatements);
         }
 
-        for (const statement of anyPlaceholdersExpanded) {
+        for (const statement of this.statements) {
             try {
                 this.parseLine(statement);
                 if (this.error !== undefined) {
@@ -89,6 +96,16 @@ export class Query implements IQuery {
         }
     }
 
+    /**
+     * Remove any instructions that are not valid for Global Queries:
+     */
+    public removeIllegalGlobalQueryInstructions() {
+        // It does not make sense to use 'ignore global query'
+        // in global queries: the value is ignored, and it would be confusing
+        // for 'explain' output to report that it had been supplied:
+        this._ignoreGlobalQuery = false;
+    }
+
     public get filePath(): string | undefined {
         return this.tasksFile?.path ?? undefined;
     }
@@ -102,12 +119,15 @@ export class Query implements IQuery {
         switch (true) {
             case this.shortModeRegexp.test(line):
                 this._queryLayoutOptions.shortMode = true;
+                this.saveLayoutStatement(statement);
                 break;
             case this.fullModeRegexp.test(line):
                 this._queryLayoutOptions.shortMode = false;
+                this.saveLayoutStatement(statement);
                 break;
             case this.explainQueryRegexp.test(line):
                 this._queryLayoutOptions.explainQuery = true;
+                // We intentionally do not explain the 'explain' statement, as it clutters up documentation.
                 break;
             case this.ignoreGlobalQueryRegexp.test(line):
                 this._ignoreGlobalQuery = true;
@@ -120,7 +140,7 @@ export class Query implements IQuery {
             case this.parseGroupBy(line, statement):
                 break;
             case this.hideOptionsRegexp.test(line):
-                this.parseHideOptions(line);
+                this.parseHideOptions(statement);
                 break;
             case this.commentRegexp.test(line):
                 // Comment lines are ignored
@@ -337,7 +357,8 @@ ${statement.explainStatement('    ')}
         }
     }
 
-    private parseHideOptions(line: string): void {
+    private parseHideOptions(statement: Statement): void {
+        const line = statement.anyPlaceholdersExpanded;
         const hideOptionsMatch = line.match(this.hideOptionsRegexp);
         if (hideOptionsMatch === null) {
             return;
@@ -346,12 +367,18 @@ ${statement.explainStatement('    ')}
         const option = hideOptionsMatch[2].toLowerCase();
 
         if (parseQueryShowHideOptions(this._queryLayoutOptions, option, hide)) {
+            this.saveLayoutStatement(statement);
             return;
         }
         if (parseTaskShowHideOptions(this._taskLayoutOptions, option, !hide)) {
+            this.saveLayoutStatement(statement);
             return;
         }
         this.setError('do not understand hide/show option', new Statement(line, line));
+    }
+
+    private saveLayoutStatement(statement: Statement) {
+        this.layoutStatements.push(statement);
     }
 
     private parseFilter(line: string, statement: Statement) {
