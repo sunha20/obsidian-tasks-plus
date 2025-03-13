@@ -151,7 +151,7 @@ export async function moveTask(task: Task) {
 }
 
 export async function addSchduled(task: Task) {
-    const newTask = new Task({
+    const newTasks = new Task({
         // NEW_TASK_FIELD_EDIT_REQUIRED
         status: task.status,
         description: task.description,
@@ -176,15 +176,17 @@ export async function addSchduled(task: Task) {
         scheduledDateIsInferred: task.scheduledDateIsInferred,
     });
 
-    const originalFile = vault?.getAbstractFileByPath(task.taskLocation.tasksFile.path);
-    const originalLine = task.taskLocation.lineNumber;
-    if (!(originalFile instanceof TFile)) {
-        throw new Notice(`Tasks: No file found for ${task.taskLocation.tasksFile.path}. Retrying ...`);
-    }
-    // @ts-ignore
-    const originalContents = (await vault.read(originalFile)).split('\n');
-    originalContents[originalLine] = newTask.toFileLineString();
-    await vault?.modify(originalFile, originalContents.join('\n'));
+    replaceTaskWithTasks({ originalTask: task, newTasks });
+
+    // const originalFile = vault?.getAbstractFileByPath(task.taskLocation.tasksFile.path);
+    // const originalLine = task.taskLocation.lineNumber;
+    // if (!(originalFile instanceof TFile)) {
+    //     throw new Notice(`Tasks: No file found for ${task.taskLocation.tasksFile.path}. Retrying ...`);
+    // }
+    // // @ts-ignore
+    // const originalContents = (await vault.read(originalFile)).split('\n');
+    // originalContents[originalLine] = newTask.toFileLineString();
+    // await vault?.modify(originalFile, originalContents.join('\n'));
 }
 
 /**
