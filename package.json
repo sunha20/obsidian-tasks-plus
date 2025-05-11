@@ -1,7 +1,7 @@
 {
   "name": "obsidian-tasks-plus",
   "version": "1.1.1",
-  "tasksVersion": "7.19.2",
+  "tasksVersion": "7.19.1",
   "description": "A custom plugin based on the Obsidian Tasks plugin. Adds a 'Task Move' button that allows moving the markdown line of a task to a desired note when the task is rendered.",
   "main": "main.js",
   "engines": {
