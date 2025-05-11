@@ -121,7 +121,7 @@ export async function moveTask(task: Task) {
             dueDate: task.dueDate,
             doneDate: task.doneDate,
             cancelledDate: task.cancelledDate,
-            recurrence: null,
+            recurrence: task.recurrence,
             onCompletion: task.onCompletion,
             dependsOn: task.dependsOn,
             id: task.id,
